@@ -1,59 +1,38 @@
 import streamlit as st
 import pandas as pd
 import re
-import nltk
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
+import string
+import os
+from datetime import datetime
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.utils import pad_sequences
 from tensorflow.keras.models import load_model
 from huggingface_hub import hf_hub_download
 from deep_translator import GoogleTranslator
-from datetime import datetime
-import os
-
-# ----------------- NLTK Downloads -----------------
-import os
-import nltk
-
-# Tell nltk to look in local folder
-nltk.data.path.append("nltk_data")
-
 
 # ----------------- Page Config & Styling -----------------
 st.set_page_config(page_title="🎬 Sentiment Analyzer", layout="centered")
 
 st.markdown("""
     <style>
-    @keyframes gradientAnimation {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-
-    .stApp {
-        background: linear-gradient(-45deg, #0f172a, #1e293b, #2563eb, #1d4ed8);
-        background-size: 300% 300%;
-        animation: gradientAnimation 15s ease infinite;
-        color: white;
-        font-family: 'Segoe UI', sans-serif;
-    }
-
-    .stTextInput > label, .stTextArea > label, .stMarkdown, .stSubheader, .stCaption {
-        color: #e2e8f0;
-        font-weight: 600;
-    }
-
-    .stButton > button {
-        background-color: #2563eb !important;
-        color: white !important;
-        font-weight: bold;
-        border-radius: 10px;
-    }
-
-    .stButton > button:hover {
-        background-color: #1d4ed8 !important;
-    }
+        .stApp {
+            background-image: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .stTextInput > label, .stTextArea > label, .stMarkdown, .stSubheader, .stCaption {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+        .stButton > button {
+            background-color: #2563eb !important;
+            color: white !important;
+            font-weight: bold;
+            border-radius: 10px;
+        }
+        .stButton > button:hover {
+            background-color: #1d4ed8 !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -62,7 +41,7 @@ with st.sidebar:
     st.markdown("""
         <style>
             .sidebar-title, .sidebar-text {
-                color: white !important;
+                color: black !important;
                 font-weight: bold;
             }
         </style>
@@ -79,16 +58,24 @@ with st.sidebar:
         )
 
 # ----------------- Stopwords -----------------
-stop_words = set(stopwords.words('english'))
-negation_words = {'not', 'no', 'never', "don’t", "isn’t", "wasn’t", "couldn’t", "wouldn’t", "shouldn’t"}
+stop_words = {
+    "a", "an", "the", "and", "or", "is", "are", "to", "in", "of", "that", "this", "with", "on",
+    "for", "as", "was", "were", "at", "by", "be", "has", "have", "from", "but", "not", "no", "it's",
+    "you", "your", "we", "they", "i", "he", "she", "them", "it", "do", "does", "did", "will", "would",
+    "should", "could", "my", "our", "their", "if", "than", "then", "about", "just", "so", "because",
+    "can", "been", "also", "out", "very", "there", "what", "who", "whom", "when", "where", "how",
+    "more", "most", "some", "any", "such", "into", "up", "down", "off", "over", "under", "again", "further",
+    "now", "only", "once", "here", "why", "don't", "isn't", "wasn't", "couldn't", "shouldn't", "wouldn't"
+}
+negation_words = {"not", "no", "never", "don’t", "isn’t", "wasn’t", "couldn’t", "wouldn’t", "shouldn’t"}
 stop_words -= negation_words
 
 # ----------------- Preprocessing -----------------
 def preprocess_review(text):
     text = text.lower()
-    text = re.sub(r"[^a-zA-Z\s']", "", text)
-    words = word_tokenize(text)
-    filtered = [word for word in words if word not in stop_words]
+    text = re.sub(rf"[{string.punctuation}]", "", text)
+    tokens = text.split()
+    filtered = [word for word in tokens if word not in stop_words]
     return " ".join(filtered)
 
 # ----------------- Load Model and Tokenizer -----------------
@@ -109,6 +96,7 @@ model = load_sentiment_model()
 tokenizer = load_tokenizer_data()
 max_len = 500
 
+# ----------------- Save to CSV -----------------
 def save_to_history(movie, review, sentiment):
     row = {
         "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -125,7 +113,7 @@ def save_to_history(movie, review, sentiment):
     df.to_csv(file, index=False)
 
 # ----------------- App UI -----------------
-st.title("🎬 Movie Review Sentiment Analyzer-(LSTM model)")
+st.title("🎬 Movie Review Sentiment Analyzer")
 
 col1, _ = st.columns([3, 1])
 with col1:
@@ -150,4 +138,3 @@ if st.button("🔍 Analyze Sentiment"):
 
         except Exception as e:
             st.error(f"Translation or prediction failed: {e}")
-
