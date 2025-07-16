@@ -13,8 +13,19 @@ from datetime import datetime
 import os
 
 # ----------------- NLTK Downloads -----------------
-nltk.download('punkt')
-nltk.download('stopwords')
+import nltk
+
+# Safe NLTK downloads with fallback
+try:
+    nltk.data.find("tokenizers/punkt")
+except LookupError:
+    nltk.download("punkt")
+
+try:
+    nltk.data.find("corpora/stopwords")
+except LookupError:
+    nltk.download("stopwords")
+
 
 # ----------------- Page Config & Styling -----------------
 st.set_page_config(page_title="🎬 Sentiment Analyzer", layout="centered")
