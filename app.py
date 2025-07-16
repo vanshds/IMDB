@@ -13,18 +13,11 @@ from datetime import datetime
 import os
 
 # ----------------- NLTK Downloads -----------------
+import os
 import nltk
 
-# Safe NLTK downloads with fallback
-try:
-    nltk.data.find("tokenizers/punkt")
-except LookupError:
-    nltk.download("punkt")
-
-try:
-    nltk.data.find("corpora/stopwords")
-except LookupError:
-    nltk.download("stopwords")
+# Tell nltk to look in local folder
+nltk.data.path.append("nltk_data")
 
 
 # ----------------- Page Config & Styling -----------------
