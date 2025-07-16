@@ -45,7 +45,6 @@ with st.sidebar:
                 font-weight: bold;
             }
         </style>
-        <div class="sidebar-title">☰ Menu</div>
         <div class="sidebar-text">Download the full OTT industry report:</div>
     """, unsafe_allow_html=True)
 
